@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+import sys, json, optparse, os
+
+from os import sys, path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+from entities.nets import Network
+from entities.entities import RouterEntity, ConnectorEntity
+
+VERSION = "1.0.0"
+ROUTER = "Router"
+CONNECTOR = "Connect"
+COMMENT = '#'
+
+class OptionParser(optparse.OptionParser):
+    """Adds standard --version option to optparse.OptionParser"""
+    def __init__(self, *args, **kwargs):
+        optparse.OptionParser.__init__(self, *args, **kwargs)
+        def version_cb(*args):
+            print("%s" % VERSION)
+            exit(0)
+
+        self.add_option("--version", help="Print version and exit.",
+                        action="callback", callback=version_cb)
+
+def parse_args(argv):
+    usage = "%prog [options]"
+    parser = OptionParser(usage=usage)
+    group = optparse.OptionGroup(parser, "Test")
+    group.add_option("-c", "--config", action="store", type="string", default=None,
+                     metavar="CONFIG", help="Configuration file to be read")
+
+    opts, args = parser.parse_args(args=argv)
+
+    # You must specify the config file I intend to read from.
+    if not opts.config:
+        parser.error("You must specify one of these options: -c.")
+
+    return opts, args
+
+def run(argv):
+    opts, args = parse_args(argv)
+
+    routers = []
+    connectors = []
+    # Open the config file.
+    with open(opts.config, "r") as file:
+        for data in file:
+            if data and not data.startswith(COMMENT):
+                components = data.rstrip().split(" ")
+                if components:
+                    if components[0] == ROUTER:
+                        router_id = components[1]
+                        router_attributes = dict()
+                        router_attributes['id'] = router_id
+
+                        try:
+                            router_attributes['host'] = components[2]
+                        except:
+                            pass
+
+                        routers.append(RouterEntity(router_attributes))
+                    elif data.startswith(CONNECTOR):
+                        conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile'}
+                        connector = ConnectorEntity(components[1], components[2], conn_attrs)
+                        connectors.append(connector)
+
+    network = Network(routers=routers, connectors=connectors)
+    network.generate_router_configs()
+
+
+if __name__ == "__main__":
+    run(sys.argv)
+
+
+
+
+
+
+
+
