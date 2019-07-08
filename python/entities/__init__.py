@@ -16,3 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
+GENERATED_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/internal"
+GENERATED_CONFIG_DIR="/etc/qpid-dispatch/"

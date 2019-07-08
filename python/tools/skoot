@@ -25,7 +25,7 @@ from os import sys, path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from entities.nets import Network
-from entities.entities import RouterEntity, ConnectorEntity
+from entities.entities import RouterEntity, ConnectorEntity, SslProfileEntity
 
 VERSION = "1.0.0"
 ROUTER = "Router"
@@ -71,8 +71,15 @@ def run(argv):
                 if components:
                     if components[0] == ROUTER:
                         router_id = components[1]
+
                         router_attributes = dict()
+                        ssl_profile = SslProfileEntity({'name': 'ssl-profile',
+                                                        'router_id': router_id.lower()})
+                        ssl_prfiles = list()
+                        ssl_prfiles.append(ssl_profile)
+
                         router_attributes['id'] = router_id
+                        router_attributes['sslProfiles'] = ssl_prfiles
 
                         try:
                             router_attributes['host'] = components[2]
@@ -81,7 +88,7 @@ def run(argv):
 
                         routers.append(RouterEntity(router_attributes))
                     elif data.startswith(CONNECTOR):
-                        conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile'}
+                        conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile',  'verifyHostname': 'no', 'role': 'inter-router'}
                         connector = ConnectorEntity(components[1], components[2], conn_attrs)
                         connectors.append(connector)
 

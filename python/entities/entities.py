@@ -18,6 +18,7 @@
 #
 
 import sys
+from . import GENERATED_TLS_CERTS_DIR
 
 if sys.version_info[0] > 2:
     # Python 3 does not have a unicode() builtin method,
@@ -31,20 +32,6 @@ else:
         return d.iteritems()
 
 class BaseEntity(object):
-    """
-    A collection of named attributes.
-
-    Attribute access:
-    - via index operator: entity['foo']
-    - as python attributes: entity.foo (only if attribute name is a legal python identitfier
-      after replacing '-' with '_')
-
-    @ivar attributes: Map of attribute values for this entity.
-
-    NOTE: BaseEntity does not itself implement the python map protocol because map
-    methods (in particular 'update') can clash with AMQP methods and attributes.
-    """
-
     def __init__(self, attributes=None, **kwargs):
         self.__dict__['attributes'] = {}
         if attributes:
@@ -97,20 +84,25 @@ class ListenerEntity(BaseEntity):
         self.authenticatePeer = "no"
         self.saslMechanisms = "ANONYMOUS"
         self.role = "normal"
+        self.sslProfile = None
 
     def http_defaults(self):
         self.defaults()
         self.port = "8672"
         self.http = "yes"
+        self.sslProfile = None
 
 
     def to_string(self):
         try:
             return "\nlistener {\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n   http: %s\n}" % (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer, self.http)
         except:
-            return "\nlistener {\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n}" % (
-            self.role, self.host, self.port, self.saslMechanisms,
-            self.authenticatePeer)
+            if self.sslProfile:
+                return "\nlistener {\n   sslProfile: %s\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n}" % \
+                       (self.sslProfile, self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
+            else:
+                return "\nlistener {\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n}" % \
+                       (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
 
 
 class ConnectorEntity(BaseEntity):
@@ -121,7 +113,7 @@ class ConnectorEntity(BaseEntity):
 
     def to_string(self):
         #return "connector {\n name: %s\nrole: inter-router\n host: %s \n port: %s \nsaslMechanisms: EXTERNAL\n sslProfile: %s }" % self.to_router, self.host, self.port, self.ssl_profile
-        return "\nconnector {\n   name: to_%s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   sslProfile: %s\n}" % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile)
+        return "\nconnector {\n   name: to_%s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   sslProfile: %s\n   verifyHostname: %s\n   role: %s\n}" % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
 
 class RouterEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
@@ -134,7 +126,11 @@ class RouterEntity(BaseEntity):
 class SslProfileEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
         super(SslProfileEntity, self).__init__(attributes, **kwattrs)
-        self.mode="interior"
+        self.cert_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".crt"
+        self.key_File = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".key"
+        self.password_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
+        self.ca_certFile = GENERATED_TLS_CERTS_DIR + "ca.crt"
+
 
     def to_string(self):
-        return "\nsslProfile {\n   name:%s\n   caCertFile: %s\n   certFile:%s\n   passwordFile: %s\n   certDb: %s\n}" % (self.name, self.ca_cert_file, self.cert_file, self.password_file, self.cert_db)
+        return "\nsslProfile {\n   name:%s\n   certFile: %s\n   keyFile:%s\n   passwordFile: %s\n   caCertFile: %s\n}" % (self.name, self.cert_file, self.key_File, self.password_file, self.ca_certFile)

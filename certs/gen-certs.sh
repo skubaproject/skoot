@@ -18,18 +18,17 @@
 # under the License
 #
 
-DIRECTORY=`dirname $0`
-D=$DIRECTORY/tls-certs
+D=$1
 
 echo $D
 
-echo "$1-password" | cat > $D/tls.$1.pw
-openssl genrsa -aes256 -passout file:$D/tls.$1.pw -out $D/tls.$1.key 4096
+echo "$2-password" | cat > $D/tls.$2.pw
+openssl genrsa -aes256 -passout file:$D/tls.$2.pw -out $D/tls.$2.key 4096
 
-openssl req -new -key $D/tls.$1.key -passin file:$D/tls.$1.pw -out $D/tls.$1.csr -subj "/C=US/ST=CA/L=San Francisco/O=Red Hat Inc./CN=inter-router-demo2-amq.apps.summit.sysdeseng-$1.com"
+openssl req -new -key $D/tls.$2.key -passin file:$D/tls.$2.pw -out $D/tls.$2.csr -subj "/C=US/ST=CA/L=San Francisco/O=Red Hat Inc./CN=inter-router-demo2-amq.apps.summit.sysdeseng-$2.com"
 
-openssl x509 -req -in $D/tls.$1.csr -CA $D/ca.crt -CAkey $D/ca.key -CAcreateserial -days 9999 -out $D/tls.$1.crt -passin pass:ca-password
+openssl x509 -req -in $D/tls.$2.csr -CA $D/ca.crt -CAkey $D/ca.key -CAcreateserial -days 9999 -out $D/tls.$2.crt -passin pass:ca-password
 
-openssl verify -verbose -CAfile $D/ca.crt $D/tls.$1.crt
+openssl verify -verbose -CAfile $D/ca.crt $D/tls.$2.crt
 
 #rm -f $D/*.csr .srl $D/ca.key

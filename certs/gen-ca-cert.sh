@@ -20,13 +20,20 @@
 
 ##### Create root CA #####
 
-DIRECTORY=`dirname $0`
-D=$DIRECTORY/tls-certs
+D=$1
 
-rm -rf $D
-echo Removed direcotry - $D
-mkdir $D
-echo Created direcotry - $D
+if [ -d "$D" ]; then
+   rm -rf $D
+   echo Removed direcotry - $D
+   mkdir -p $D
+   echo Created direcotry - $D
+else
+   mkdir -p "$D"
+   echo Created direcotry - $D
+fi
+
+
+
 
 ##### Create root CA #####
 openssl genrsa -aes256 -passout pass:ca-password -out $D/ca.key 4096

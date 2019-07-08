@@ -18,6 +18,3 @@
 #
 
 import subprocess
-
-def generate_ca_cert():
-    subprocess.call(['../../../certs/certificate-authority/test.sh'])
