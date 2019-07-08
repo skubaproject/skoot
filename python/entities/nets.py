@@ -18,6 +18,7 @@
 #
 import os
 import subprocess
+import shutil
 from subprocess import call
 from subprocess import PIPE
 
@@ -129,13 +130,21 @@ class Network(object):
                 out.write("\n")
                 out.write("\naddress {\n   prefix: closest\n   distribution: closest\n} \naddress { \n   prefix: multicast\n   distribution: multicast\n} \n")
 
+
+        if not os.path.exists(GENERATED_YAML_DIR):
+            os.makedirs(GENERATED_YAML_DIR)
+        else:
+            try:
+                shutil.rmtree(GENERATED_YAML_DIR)
+                os.makedirs(GENERATED_YAML_DIR)
+            except OSError as e:
+                os.makedirs(GENERATED_YAML_DIR)
+
         for router in self.routers:
             # Now all the router related certs and config files have been created. Create the YAML files.
 
             yaml_file_name = self.router_yaml_file_name(router.id)
 
-            if not os.path.exists(GENERATED_YAML_DIR):
-                os.makedirs(GENERATED_YAML_DIR)
             with open(GENERATED_YAML_DIR + yaml_file_name, "w") as yamlout:
                 with open("../../yaml/secrets.yaml", "r") as secretsyaml:
                     content = secretsyaml.read()
