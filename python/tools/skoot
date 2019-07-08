@@ -50,11 +50,19 @@ def parse_args(argv):
     group.add_option("-c", "--config", action="store", type="string", default=None,
                      metavar="CONFIG", help="Configuration file to be read")
 
+    group.add_option("-o", "--output", action="store", type="string", default=None,
+                     metavar="OUTPUT", help="Folder to output the yaml files")
+
     opts, args = parser.parse_args(args=argv)
 
     # You must specify the config file I intend to read from.
     if not opts.config:
-        parser.error("You must specify one of these options: -c.")
+        parser.error("You must specify option: -c.")
+
+    if not opts.output:
+        parser.error("You must specify option: -o.")
+
+    print (opts.output)
 
     return opts, args
 
@@ -92,7 +100,7 @@ def run(argv):
                         connector = ConnectorEntity(components[1], components[2], conn_attrs)
                         connectors.append(connector)
 
-    network = Network(routers=routers, connectors=connectors)
+    network = Network(routers=routers, connectors=connectors, yaml_output_dir=opts.output)
     network.generate_router_configs()
 
 

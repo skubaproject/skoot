@@ -20,6 +20,7 @@
 import sys
 import base64
 from . import GENERATED_TLS_CERTS_DIR
+from . import MOUNTED_TLS_CERTS_DIR
 
 if sys.version_info[0] > 2:
     # Python 3 does not have a unicode() builtin method,
@@ -133,6 +134,12 @@ class SslProfileEntity(BaseEntity):
         self.password_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
         self.ca_certFile = GENERATED_TLS_CERTS_DIR + "ca.crt"
 
+        self.mounted_cert_file = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".crt"
+        self.mounted_key_File = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".key"
+        self.mounted_password_file = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
+        self.mounted_ca_certFile = MOUNTED_TLS_CERTS_DIR + "ca.crt"
+
+
 
     def gen_base64_content(self):
         with open(self.cert_file, "r") as certfile:
@@ -152,4 +159,4 @@ class SslProfileEntity(BaseEntity):
             self.base64_ca_cert =  base64.b64encode(content)
 
     def to_string(self):
-        return "\nsslProfile {\n   name:%s\n   certFile: %s\n   keyFile:%s\n   passwordFile: %s\n   caCertFile: %s\n}" % (self.name, self.cert_file, self.key_File, self.password_file, self.ca_certFile)
+        return "\nsslProfile {\n   name:%s\n   certFile: %s\n   keyFile:%s\n   passwordFile: %s\n   caCertFile: %s\n}" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)

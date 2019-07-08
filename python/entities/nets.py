@@ -25,14 +25,15 @@ from subprocess import PIPE
 from entities import ListenerEntity
 from . import GENERATED_TLS_CERTS_DIR
 from . import GENERATED_CONFIG_DIR
-from . import GENERATED_YAML_DIR
 from . import YAML_SEPARATOR
 
 class Network(object):
-    def __init__(self, routers=None, connectors=None):
+    def __init__(self, routers=None, connectors=None, yaml_output_dir=None):
         self.routers = routers
         self.connectors = connectors
         self.listener = None
+        if not yaml_output_dir.endswith("/"):
+            self.yaml_output_dir = yaml_output_dir + "/"
 
     def router_file_name(self, router_id):
         return router_id + ".conf"
@@ -87,15 +88,24 @@ class Network(object):
         p = subprocess.Popen(["../../certs/gen-ca-cert.sh", GENERATED_TLS_CERTS_DIR], stdout=PIPE, universal_newlines=True)
         out = p.communicate()[0]
 
+        # contents of the file will be erased.
+        if not os.path.exists(GENERATED_CONFIG_DIR):
+            os.makedirs(GENERATED_CONFIG_DIR)
+        else:
+            try:
+                shutil.rmtree(GENERATED_CONFIG_DIR)
+                os.makedirs(GENERATED_CONFIG_DIR)
+            except OSError as e:
+                os.makedirs(GENERATED_CONFIG_DIR)
+
         for router in self.routers:
             file_name = self.router_file_name(router.id)
 
             p = subprocess.Popen(["../../certs/gen-certs.sh", GENERATED_TLS_CERTS_DIR, router.id.lower()], stdout=PIPE,
                                  universal_newlines=True)
             out = p.communicate()[0]
-
-            # contents of the file will be erased.
-            with open(GENERATED_CONFIG_DIR +  file_name, "w") as out:
+            router_config_file = GENERATED_CONFIG_DIR + file_name
+            with open(router_config_file, "w") as out:
                 out.write(router.to_string())
                 out.write("\n")
 
@@ -131,21 +141,21 @@ class Network(object):
                 out.write("\naddress {\n   prefix: closest\n   distribution: closest\n} \naddress { \n   prefix: multicast\n   distribution: multicast\n} \n")
 
 
-        if not os.path.exists(GENERATED_YAML_DIR):
-            os.makedirs(GENERATED_YAML_DIR)
+        if not os.path.exists(self.yaml_output_dir):
+            os.makedirs(self.yaml_output_dir)
         else:
             try:
-                shutil.rmtree(GENERATED_YAML_DIR)
-                os.makedirs(GENERATED_YAML_DIR)
+                shutil.rmtree(self.yaml_output_dir)
+                os.makedirs(self.yaml_output_dir)
             except OSError as e:
-                os.makedirs(GENERATED_YAML_DIR)
+                os.makedirs(self.yaml_output_dir)
 
         for router in self.routers:
             # Now all the router related certs and config files have been created. Create the YAML files.
 
-            yaml_file_name = self.router_yaml_file_name(router.id)
+            yaml_file_name = self.yaml_output_dir + self.router_yaml_file_name(router.id)
 
-            with open(GENERATED_YAML_DIR + yaml_file_name, "w") as yamlout:
+            with open(yaml_file_name, "w") as yamlout:
                 with open("../../yaml/secrets.yaml", "r") as secretsyaml:
                     content = secretsyaml.read()
                     ssl_profile = router.sslProfiles[0]
