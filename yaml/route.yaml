@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Route
+metadata:
+  name: amqps
+spec:
+  host: %s
+  port:
+    targetPort: amqps
+  tls:
+    termination: passthrough
+  to:
+    kind: Service
+    name: messaging
+    weight: 100
+  wildcardPolicy: None

@@ -18,6 +18,7 @@
 #
 
 import sys
+import base64
 from . import GENERATED_TLS_CERTS_DIR
 
 if sys.version_info[0] > 2:
@@ -119,6 +120,7 @@ class RouterEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
         super(RouterEntity, self).__init__(attributes, **kwattrs)
         self.mode="interior"
+        self.has_route = False
 
     def to_string(self):
         return "router {\n   id:%s\n   mode: %s\n}" % (self.id, self.mode)
@@ -131,6 +133,23 @@ class SslProfileEntity(BaseEntity):
         self.password_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
         self.ca_certFile = GENERATED_TLS_CERTS_DIR + "ca.crt"
 
+
+    def gen_base64_content(self):
+        with open(self.cert_file, "r") as certfile:
+            content = certfile.read()
+            self.base64_cert =  base64.b64encode(content)
+
+        with open(self.key_File, "r") as keyfile:
+            content = keyfile.read()
+            self.base64_key =  base64.b64encode(content)
+
+        with open(self.password_file, "r") as passfile:
+            content = passfile.read()
+            self.base64_password =  base64.b64encode(content)
+
+        with open(self.ca_certFile, "r") as cacertfile:
+            content = cacertfile.read()
+            self.base64_ca_cert =  base64.b64encode(content)
 
     def to_string(self):
         return "\nsslProfile {\n   name:%s\n   certFile: %s\n   keyFile:%s\n   passwordFile: %s\n   caCertFile: %s\n}" % (self.name, self.cert_file, self.key_File, self.password_file, self.ca_certFile)

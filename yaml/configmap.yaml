@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  qdrouterd.conf.template: |
+%s
+kind: ConfigMap
+metadata:
+  name: qdr-config

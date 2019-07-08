@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+import os
 import subprocess
 from subprocess import call
 from subprocess import PIPE
@@ -24,6 +24,8 @@ from subprocess import PIPE
 from entities import ListenerEntity
 from . import GENERATED_TLS_CERTS_DIR
 from . import GENERATED_CONFIG_DIR
+from . import GENERATED_YAML_DIR
+from . import YAML_SEPARATOR
 
 class Network(object):
     def __init__(self, routers=None, connectors=None):
@@ -33,6 +35,9 @@ class Network(object):
 
     def router_file_name(self, router_id):
         return router_id + ".conf"
+
+    def router_yaml_file_name(self, router_id):
+        return router_id + ".yaml"
 
     def find_to_connector(self, router_id):
         if not self.connectors:
@@ -83,6 +88,7 @@ class Network(object):
 
         for router in self.routers:
             file_name = self.router_file_name(router.id)
+
             p = subprocess.Popen(["../../certs/gen-certs.sh", GENERATED_TLS_CERTS_DIR, router.id.lower()], stdout=PIPE,
                                  universal_newlines=True)
             out = p.communicate()[0]
@@ -94,6 +100,7 @@ class Network(object):
 
                 for ssl_profile in router.sslProfiles:
                     out.write(ssl_profile.to_string())
+                    ssl_profile.gen_base64_content()
 
                 # Write default
                 self.write_default_listeners(out)
@@ -105,13 +112,14 @@ class Network(object):
                     out.write(self.listener.to_string())
                 if connector:
                     out.write("\n")
-                    router = self.find_router_by_id(connector.to_router)
-                    connector.host = router.host
+                    to_router = self.find_router_by_id(connector.to_router)
+                    connector.host = to_router.host
                     out.write(connector.to_string())
 
                 connector = self.find_to_connector(router.id)
                 if connector:
                     if connector.to_router == router.id:
+                        router.has_route = True
                         listener_attrs = {'host': '0.0.0.0', "port": "55672", "role": "inter-router", "saslMechanisms": "EXTERNAL", "authenticatePeer": "yes", 'sslProfile': 'ssl-profile'}
                         listener = ListenerEntity(listener_attrs)
                         out.write("\n")
@@ -121,6 +129,54 @@ class Network(object):
                 out.write("\n")
                 out.write("\naddress {\n   prefix: closest\n   distribution: closest\n} \naddress { \n   prefix: multicast\n   distribution: multicast\n} \n")
 
-            # Now all the router related certs and config files have been created. Create the
+        for router in self.routers:
+            # Now all the router related certs and config files have been created. Create the YAML files.
+
+            yaml_file_name = self.router_yaml_file_name(router.id)
+
+            if not os.path.exists(GENERATED_YAML_DIR):
+                os.makedirs(GENERATED_YAML_DIR)
+            with open(GENERATED_YAML_DIR + yaml_file_name, "w") as yamlout:
+                with open("../../yaml/secrets.yaml", "r") as secretsyaml:
+                    content = secretsyaml.read()
+                    ssl_profile = router.sslProfiles[0]
+                    r_id = router.id.lower()
+                    content  = content % (r_id, ssl_profile.base64_cert, r_id, ssl_profile.base64_key, r_id, ssl_profile.base64_password, ssl_profile.base64_ca_cert)
+                    yamlout.write(content)
+                yamlout.write(YAML_SEPARATOR)
+
+                with open("../../yaml/configmap.yaml", "r") as configmapyaml:
+                    content = configmapyaml.read()
+                    file_name = self.router_file_name(router.id)
+                    with open(GENERATED_CONFIG_DIR + file_name, "r") as router_config:
+                        router_content  = router_config.read()
+                        content = content %  router_content
+                        yamlout.write(content)
+
+                yamlout.write(YAML_SEPARATOR)
+
+                with open("../../yaml/service.yaml", "r") as serviceyaml:
+                    for line in serviceyaml:
+                        yamlout.write(line)
+                yamlout.write(YAML_SEPARATOR)
+
+                with open("../../yaml/deployment.yaml", "r") as deploymentyaml:
+                    for line in deploymentyaml:
+                        yamlout.write(line)
+                yamlout.write(YAML_SEPARATOR)
+
+                with open("../../yaml/route.yaml", "r") as routeyaml:
+                    if router.has_route:
+                        content = routeyaml.read()
+                        content = content % router.host
+                        yamlout.write(content)
+                        yamlout.write(YAML_SEPARATOR)
+
+
+
+
+
+
+
 
 

@@ -17,5 +17,7 @@
 # under the License.
 #
 
-GENERATED_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/internal"
+GENERATED_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/internal/"
 GENERATED_CONFIG_DIR="/etc/qpid-dispatch/"
+GENERATED_YAML_DIR="/etc/qpid-dispatch/yaml/"
+YAML_SEPARATOR = "\n---\n"

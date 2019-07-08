@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: messaging
+  labels:
+    app: amq-interconnect
+spec:
+  ports:
+  - port: 5671
+    name: amqps
+  - port: 5672
+    name: amqp
+  - port: 8672
+    name: console
+  selector:
+    type: qdrouterd
