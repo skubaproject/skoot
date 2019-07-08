@@ -43,24 +43,25 @@ class Network(object):
 
     def find_to_connector(self, router_id):
         if not self.connectors:
-            return
+            return None
         for connector in self.connectors:
             if connector.to_router == router_id:
                 return connector
         return None
 
-    def find_from_connector(self, router_id):
+    def find_from_connectors(self, router_id):
         if not self.connectors:
             return
+        conns = []
         for connector in self.connectors:
             if connector.from_router == router_id:
-                return connector
-        return None
+                conns.append(connector)
+        return conns
 
     def find_router_by_id(self, router_id):
         maching_router = None
         for router in self.routers:
-            if router.id == router.id:
+            if router.id == router_id:
                 maching_router = router
                 break
         return maching_router
@@ -117,15 +118,16 @@ class Network(object):
                 self.write_default_listeners(out)
 
                 #Connectors
-                connector = self.find_from_connector(router.id)
+                connectors = self.find_from_connectors(router.id)
                 # Each router gets one listener
                 if self.listener:
                     out.write(self.listener.to_string())
-                if connector:
-                    out.write("\n")
-                    to_router = self.find_router_by_id(connector.to_router)
-                    connector.host = to_router.host
-                    out.write(connector.to_string())
+                if connectors:
+                    for conn in connectors:
+                        out.write("\n")
+                        to_router = self.find_router_by_id(conn.to_router)
+                        conn.host = to_router.host
+                        out.write(conn.to_string())
 
                 connector = self.find_to_connector(router.id)
                 if connector:

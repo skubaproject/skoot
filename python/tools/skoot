@@ -94,7 +94,8 @@ def run(argv):
                         except:
                             pass
 
-                        routers.append(RouterEntity(router_attributes))
+                        router_entity = RouterEntity(router_attributes)
+                        routers.append(router_entity)
                     elif data.startswith(CONNECTOR):
                         conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile',  'verifyHostname': 'no', 'role': 'inter-router'}
                         connector = ConnectorEntity(components[1], components[2], conn_attrs)
