@@ -140,7 +140,7 @@ class Network(object):
 
                 # Write out the boiler pl;plate addresses
                 out.write("\n")
-                out.write("\naddress {\n   prefix: closest\n   distribution: closest\n} \naddress { \n   prefix: multicast\n   distribution: multicast\n} \n")
+                out.write("\n    address {\n       prefix: closest\n       distribution: closest\n    } \n\n    address {\n       prefix: multicast\n       distribution: multicast\n    }\n")
 
 
         if not os.path.exists(self.yaml_output_dir):
