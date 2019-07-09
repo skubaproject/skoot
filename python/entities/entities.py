@@ -97,13 +97,13 @@ class ListenerEntity(BaseEntity):
 
     def to_string(self):
         try:
-            return "\nlistener {\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n   http: %s\n}" % (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer, self.http)
+            return "\n    listener {\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n       http: %s\n    }" % (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer, self.http)
         except:
             if self.sslProfile:
-                return "\nlistener {\n   sslProfile: %s\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n}" % \
+                return "\n    listener {\n       sslProfile: %s\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n    }" % \
                        (self.sslProfile, self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
             else:
-                return "\nlistener {\n   role: %s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   authenticatePeer:%s\n}" % \
+                return "\n    listener {\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n    }" % \
                        (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
 
 
@@ -115,7 +115,7 @@ class ConnectorEntity(BaseEntity):
 
     def to_string(self):
         #return "connector {\n name: %s\nrole: inter-router\n host: %s \n port: %s \nsaslMechanisms: EXTERNAL\n sslProfile: %s }" % self.to_router, self.host, self.port, self.ssl_profile
-        return "\nconnector {\n   name: to_%s\n   host: %s\n   port: %s\n   saslMechanisms: %s\n   sslProfile: %s\n   verifyHostname: %s\n   role: %s\n}" % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
+        return "\n    connector {\n       name: to_%s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       sslProfile: %s\n       verifyHostname: %s\n       role: %s\n    }" % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
 
 class RouterEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
@@ -124,7 +124,7 @@ class RouterEntity(BaseEntity):
         self.has_route = False
 
     def to_string(self):
-        return "router {\n   id:%s\n   mode: %s\n}" % (self.id, self.mode)
+        return "    router {\n       id:%s\n       mode: %s\n    }" % (self.id, self.mode)
 
 class SslProfileEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
@@ -159,4 +159,4 @@ class SslProfileEntity(BaseEntity):
             self.base64_ca_cert =  base64.b64encode(content)
 
     def to_string(self):
-        return "\nsslProfile {\n   name:%s\n   certFile: %s\n   keyFile:%s\n   passwordFile: %s\n   caCertFile: %s\n}" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)
+        return "\n    sslProfile {\n       name:%s\n       certFile: %s\n       keyFile:%s\n       passwordFile: %s\n       caCertFile: %s\n    }" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)
