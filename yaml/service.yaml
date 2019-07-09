@@ -12,5 +12,8 @@ spec:
     name: amqp
   - port: 8672
     name: console
+  - port: 55672
+    name: inter-router
+
   selector:
     type: qdrouterd
