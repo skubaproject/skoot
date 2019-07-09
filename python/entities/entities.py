@@ -134,9 +134,9 @@ class SslProfileEntity(BaseEntity):
         self.password_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
         self.ca_certFile = GENERATED_TLS_CERTS_DIR + "ca.crt"
 
-        self.mounted_cert_file = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".crt"
-        self.mounted_key_File = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".key"
-        self.mounted_password_file = MOUNTED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
+        self.mounted_cert_file = MOUNTED_TLS_CERTS_DIR + "tls.crt"
+        self.mounted_key_File = MOUNTED_TLS_CERTS_DIR + "tls.key"
+        self.mounted_password_file = MOUNTED_TLS_CERTS_DIR + "tls.pw"
         self.mounted_ca_certFile = MOUNTED_TLS_CERTS_DIR + "ca.crt"
 
 

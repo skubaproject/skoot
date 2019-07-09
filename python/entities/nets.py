@@ -162,7 +162,7 @@ class Network(object):
                     content = secretsyaml.read()
                     ssl_profile = router.sslProfiles[0]
                     r_id = router.id.lower()
-                    content  = content % (r_id, ssl_profile.base64_cert, r_id, ssl_profile.base64_key, r_id, ssl_profile.base64_password, ssl_profile.base64_ca_cert)
+                    content  = content % (ssl_profile.base64_cert, ssl_profile.base64_key, ssl_profile.base64_password, ssl_profile.base64_ca_cert)
                     yamlout.write(content)
                 yamlout.write(YAML_SEPARATOR)
 
