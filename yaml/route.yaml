@@ -5,7 +5,7 @@ metadata:
 spec:
   host: %s
   port:
-    targetPort: amqps
+    targetPort: inter-router
   tls:
     termination: passthrough
   to:
