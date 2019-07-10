@@ -160,3 +160,8 @@ class SslProfileEntity(BaseEntity):
 
     def to_string(self):
         return "\n    sslProfile {\n       name:%s\n       certFile: %s\n       keyFile:%s\n       passwordFile: %s\n       caCertFile: %s\n    }" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)
+
+
+class ConsoleRouteEntity(BaseEntity):
+    def __init__(self, attributes=None, **kwattrs):
+        super(ConsoleRouteEntity, self).__init__(attributes, **kwattrs)

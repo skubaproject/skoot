@@ -25,11 +25,12 @@ from os import sys, path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from entities.nets import Network
-from entities.entities import RouterEntity, ConnectorEntity, SslProfileEntity
+from entities.entities import RouterEntity, ConnectorEntity, SslProfileEntity, ConsoleRouteEntity
 
 VERSION = "1.0.0"
 ROUTER = "Router"
 CONNECTOR = "Connect"
+CONSOLE="Console"
 COMMENT = '#'
 
 class OptionParser(optparse.OptionParser):
@@ -71,6 +72,7 @@ def run(argv):
 
     routers = []
     connectors = []
+    console_routes = []
     # Open the config file.
     with open(opts.config, "r") as file:
         for data in file:
@@ -100,8 +102,15 @@ def run(argv):
                         conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile',  'verifyHostname': 'no', 'role': 'inter-router'}
                         connector = ConnectorEntity(components[1], components[2], conn_attrs)
                         connectors.append(connector)
+                    elif data.startswith(CONSOLE):
+                        router_id = components[1]
+                        console_host = components[2]
+                        sonsole_route_attrs = {'host': console_host, 'router_id': router_id}
+                        console_route = ConsoleRouteEntity(sonsole_route_attrs)
+                        console_routes.append(console_route)
 
-    network = Network(routers=routers, connectors=connectors, yaml_output_dir=opts.output)
+
+    network = Network(routers=routers, connectors=connectors, console_routes=console_routes, yaml_output_dir=opts.output)
     network.generate_router_configs()
 
 

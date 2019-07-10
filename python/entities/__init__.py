@@ -19,7 +19,7 @@
 
 GENERATED_TLS_CERTS_DIR = "/tmp/qpid-dispatch-certs/internal/"
 MOUNTED_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/internal/"
-GENERATED_CONFIG_DIR="/tmp/qpid-dispatch/"
+GENERATED_CONFIG_DIR="/tmp/qpid-dispatch-configs/"
 MOUNTED_CONFIG_DIR="/etc/qpid-dispatch/"
 
 YAML_SEPARATOR = "\n---\n"

@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: amq-interconnect
+  name: console
+  selfLink: /apis/route.openshift.io/v1/namespaces/hello/routes/console
+spec:
+  host: %s
+  port:
+    targetPort: console
+  to:
+    kind: Service
+    name: messaging
+    weight: 100
+  wildcardPolicy: None

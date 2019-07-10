@@ -28,10 +28,11 @@ from . import GENERATED_CONFIG_DIR
 from . import YAML_SEPARATOR
 
 class Network(object):
-    def __init__(self, routers=None, connectors=None, yaml_output_dir=None):
+    def __init__(self, routers=None, connectors=None, console_routes=None, yaml_output_dir=None):
         self.routers = routers
         self.connectors = connectors
         self.listener = None
+        self.console_routes = console_routes
         if not yaml_output_dir.endswith("/"):
             self.yaml_output_dir = yaml_output_dir + "/"
 
@@ -49,9 +50,18 @@ class Network(object):
                 return connector
         return None
 
+    def find_from_console_routes(self, router_id):
+        if not self.console_routes:
+            return None
+        for console_route in self.console_routes:
+            if console_route.router_id == router_id:
+                return console_route
+        return None
+
+
     def find_from_connectors(self, router_id):
         if not self.connectors:
-            return
+            return None
         conns = []
         for connector in self.connectors:
             if connector.from_router == router_id:
@@ -91,12 +101,17 @@ class Network(object):
 
         # contents of the file will be erased.
         if not os.path.exists(GENERATED_CONFIG_DIR):
+            try:
+                shutil.rmtree(GENERATED_CONFIG_DIR)
+            except:
+                pass
             os.makedirs(GENERATED_CONFIG_DIR)
         else:
             try:
                 shutil.rmtree(GENERATED_CONFIG_DIR)
                 os.makedirs(GENERATED_CONFIG_DIR)
             except OSError as e:
+                print (e)
                 os.makedirs(GENERATED_CONFIG_DIR)
 
         for router in self.routers:
@@ -193,7 +208,13 @@ class Network(object):
                         yamlout.write(content)
                         yamlout.write(YAML_SEPARATOR)
 
-
+                with open("../../yaml/consoleroute.yaml", "r") as consolerouteyaml:
+                    console_route = self.find_from_console_routes(router.id)
+                    if console_route:
+                        content = consolerouteyaml.read()
+                        content = content % console_route.host
+                        yamlout.write(content)
+                        yamlout.write(YAML_SEPARATOR)
 
 
 
