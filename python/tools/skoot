@@ -100,6 +100,9 @@ def run(argv):
                         routers.append(router_entity)
                     elif data.startswith(CONNECTOR):
                         conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile',  'verifyHostname': 'no', 'role': 'inter-router'}
+                        if len(components) > 3:
+                            conn_attrs['cost'] = components[3]
+
                         connector = ConnectorEntity(components[1], components[2], conn_attrs)
                         connectors.append(connector)
                     elif data.startswith(CONSOLE):

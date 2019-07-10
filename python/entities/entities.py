@@ -114,8 +114,16 @@ class ConnectorEntity(BaseEntity):
         self.to_router = to_router
 
     def to_string(self):
-        #return "connector {\n name: %s\nrole: inter-router\n host: %s \n port: %s \nsaslMechanisms: EXTERNAL\n sslProfile: %s }" % self.to_router, self.host, self.port, self.ssl_profile
-        return "\n    connector {\n       name: to_%s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       sslProfile: %s\n       verifyHostname: %s\n       role: %s\n    }" % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
+        ret_val = "\n    connector {\n       name: to_%s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       sslProfile: %s\n       verifyHostname: %s\n       role: %s\n    " % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
+        try:
+            if self.cost:
+                ret_val = ret_val + '   cost: ' + self.cost + "\n    "
+        except:
+            pass
+
+        ret_val = ret_val + '}'
+        return ret_val
+
 
 class RouterEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
