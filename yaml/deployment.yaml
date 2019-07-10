@@ -1,18 +1,18 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: amq-interconnect
+  name: qdrouterd
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: amq-interconnect
+        app: qdrouterd
         version: v1
         type: qdrouterd
     spec:
       containers:
-      - name: amq-interconnect
+      - name: qdrouterd
         image: quay.io/interconnectedcloud/qdrouterd:1.8.0
         imagePullPolicy: Always
         ports:

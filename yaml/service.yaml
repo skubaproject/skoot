@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: messaging
   labels:
-    app: amq-interconnect
+    app: qdrouterd
 spec:
   ports:
   - port: 5671
