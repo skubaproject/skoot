@@ -128,7 +128,6 @@ class ConnectorEntity(BaseEntity):
 class RouterEntity(BaseEntity):
     def __init__(self, attributes=None, **kwattrs):
         super(RouterEntity, self).__init__(attributes, **kwattrs)
-        self.mode="interior"
         self.has_route = False
 
     def to_string(self):

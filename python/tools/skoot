@@ -29,6 +29,7 @@ from entities.entities import RouterEntity, ConnectorEntity, SslProfileEntity, C
 
 VERSION = "1.0.0"
 ROUTER = "Router"
+EDGE_ROUTER = "EdgeRouter"
 CONNECTOR = "Connect"
 CONSOLE="Console"
 COMMENT = '#'
@@ -79,7 +80,7 @@ def run(argv):
             if data and not data.startswith(COMMENT):
                 components = data.rstrip().split(" ")
                 if components:
-                    if components[0] == ROUTER:
+                    if components[0] == ROUTER or components[0] == EDGE_ROUTER:
                         router_id = components[1]
 
                         router_attributes = dict()
@@ -90,6 +91,10 @@ def run(argv):
 
                         router_attributes['id'] = router_id
                         router_attributes['sslProfiles'] = ssl_prfiles
+                        if components[0] == ROUTER:
+                            router_attributes['mode'] = "interior"
+                        elif components[0] == EDGE_ROUTER:
+                            router_attributes['mode'] = "edge"
 
                         try:
                             router_attributes['host'] = components[2]
@@ -111,6 +116,7 @@ def run(argv):
                         sonsole_route_attrs = {'host': console_host, 'router_id': router_id}
                         console_route = ConsoleRouteEntity(sonsole_route_attrs)
                         console_routes.append(console_route)
+
 
 
     network = Network(routers=routers, connectors=connectors, console_routes=console_routes, yaml_output_dir=opts.output)

@@ -141,6 +141,9 @@ class Network(object):
                     for conn in connectors:
                         out.write("\n")
                         to_router = self.find_router_by_id(conn.to_router)
+                        from_router = self.find_router_by_id(conn.from_router)
+                        if from_router and from_router.mode == "edge":
+                            conn.role = "edge"
                         conn.host = to_router.host
                         out.write(conn.to_string())
 
@@ -149,6 +152,11 @@ class Network(object):
                     if connector.to_router == router.id:
                         router.has_route = True
                         listener_attrs = {'host': '0.0.0.0', "port": "55672", "role": "inter-router", "saslMechanisms": "EXTERNAL", "authenticatePeer": "yes", 'sslProfile': 'ssl-profile'}
+
+                        from_router = self.find_router_by_id(connector.from_router)
+                        if from_router and from_router.mode == "edge":
+                            listener_attrs['role'] = "edge"
+
                         listener = ListenerEntity(listener_attrs)
                         out.write("\n")
                         out.write(listener.to_string())
