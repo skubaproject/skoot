@@ -22,7 +22,7 @@ import shutil
 from subprocess import call
 from subprocess import PIPE
 
-from entities import ListenerEntity
+from .entities import ListenerEntity
 from . import GENERATED_TLS_CERTS_DIR
 from . import GENERATED_CONFIG_DIR
 from . import YAML_SEPARATOR
