@@ -104,17 +104,8 @@ Console ${SKUPPER_PRIVATE_CLUSTER_NAME_1} console.${SKUPPER_NAMESPACE}.${SKUPPER
 EOF
 }
 
-function _generate_yaml {
-    cwd=${PWD}
-    mkdir -p yaml
-    pushd "../../skoot/python/tools"
-    source "export_path.sh"
-    skoot -c ${DATADIR}/arn.conf -o ${cwd}/yaml
-    popd
-}
-
 _configure_arn
-_generate_yaml
+cat ${DATADIR}/arn.conf > /dev/stdout
 
 $*
 
