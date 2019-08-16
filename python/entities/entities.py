@@ -151,19 +151,19 @@ class SslProfileEntity(BaseEntity):
     def gen_base64_content(self):
         with open(self.cert_file, "r") as certfile:
             content = certfile.read()
-            self.base64_cert =  base64.b64encode(content.encode()).decode('utf-8')
+            self.base64_cert =  base64.b64encode(content.encode())
 
         with open(self.key_File, "r") as keyfile:
             content = keyfile.read()
-            self.base64_key =  base64.b64encode(content.encode()).decode('utf-8')
+            self.base64_key =  base64.b64encode(content.encode())
 
         with open(self.password_file, "r") as passfile:
             content = passfile.read()
-            self.base64_password =  base64.b64encode(content.encode()).decode('utf-8')
+            self.base64_password =  base64.b64encode(content.encode())
 
         with open(self.ca_certFile, "r") as cacertfile:
             content = cacertfile.read()
-            self.base64_ca_cert =  base64.b64encode(content.encode()).decode('utf-8')
+            self.base64_ca_cert =  base64.b64encode(content.encode())
 
     def to_string(self):
         return "\n    sslProfile {\n       name:%s\n       certFile: %s\n       keyFile:%s\n       passwordFile: %s\n       caCertFile: %s\n    }" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)
