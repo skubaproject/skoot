@@ -1,0 +1,18 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: skupper-inter-router
+spec:
+  host: %s
+  port:
+    targetPort: inter-router
+  subdomain: ""
+  tls:
+    insecureEdgeTerminationPolicy: None
+    termination: passthrough
+  to:
+    kind: Service
+    name: skupper-internal
+    weight: 100
+---

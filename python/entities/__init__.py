@@ -17,9 +17,15 @@
 # under the License.
 #
 
-GENERATED_TLS_CERTS_DIR = "/tmp/qpid-dispatch-certs/internal/"
-MOUNTED_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/internal/"
+GENERATED_INTERNAL_TLS_CERTS_DIR = "/tmp/qpid-dispatch-certs/internal/"
+MOUNTED_INTERNAL_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/skupper-internal/"
+
+GENERATED_EXTERNAL_TLS_CERTS_DIR = "/tmp/qpid-dispatch-certs/external/"
+MOUNTED_EXTERNAL_TLS_CERTS_DIR = "/etc/qpid-dispatch-certs/skupper-amqps/"
+
 GENERATED_CONFIG_DIR="/tmp/qpid-dispatch-configs/"
 MOUNTED_CONFIG_DIR="/etc/qpid-dispatch/"
+ENTITY_INDENT = "            "
+ATTRIBUTE_INDENT = "                "
 
 YAML_SEPARATOR = "\n---\n"

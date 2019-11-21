@@ -18,17 +18,20 @@
 # under the License
 #
 
+if [  $# -le 1 ]
+then
+   echo "Usage: ./gen-certs.sh <absolute-path> namespace - Example: ./gen-ca-cert.sh /tmp/certs pvt"
+   exit 1
+fi
+
 D=$1
 
 echo $D
 
-echo "$2-password" | cat > $D/tls.$2.pw
-openssl genrsa -aes256 -passout file:$D/tls.$2.pw -out $D/tls.$2.key 4096
+openssl genrsa  -out $D/tls.$2.key 4096
 
-openssl req -new -key $D/tls.$2.key -passin file:$D/tls.$2.pw -out $D/tls.$2.csr -subj "/C=US/ST=CA/L=San Francisco/O=Red Hat Inc./CN=inter-router-demo2-amq.apps.summit.sysdeseng-$2.com"
+openssl req -new -key $D/tls.$2.key -out $D/tls.$2.csr -subj "/C=US/ST=CA/L=San Francisco/O=Red Hat Inc./CN=skupper-messaging"
 
-openssl x509 -req -in $D/tls.$2.csr -CA $D/ca.crt -CAkey $D/ca.key -CAcreateserial -days 9999 -out $D/tls.$2.crt -passin pass:ca-password
+openssl x509 -req -in $D/tls.$2.csr -CA $D/ca.crt -CAkey $D/ca.key -CAcreateserial -days 9999 -out $D/tls.$2.crt
 
 openssl verify -verbose -CAfile $D/ca.crt $D/tls.$2.crt
-
-#rm -f $D/*.csr .srl $D/ca.key

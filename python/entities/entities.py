@@ -19,8 +19,10 @@
 
 import sys
 import base64
-from . import GENERATED_TLS_CERTS_DIR
-from . import MOUNTED_TLS_CERTS_DIR
+from . import GENERATED_INTERNAL_TLS_CERTS_DIR
+from . import MOUNTED_INTERNAL_TLS_CERTS_DIR
+from . import ATTRIBUTE_INDENT
+from . import ENTITY_INDENT
 
 if sys.version_info[0] > 2:
     # Python 3 does not have a unicode() builtin method,
@@ -81,29 +83,49 @@ class ListenerEntity(BaseEntity):
         super(ListenerEntity, self).__init__(attributes, **kwattrs)
 
     def defaults(self):
-        self.port = "amqp"
+        self.port = "5672"
         self.host = "0.0.0.0"
-        self.authenticatePeer = "no"
-        self.saslMechanisms = "ANONYMOUS"
         self.role = "normal"
         self.sslProfile = None
+        self.saslMechanisms = "ANONYMOUS"
+        self.authenticatePeer = "no"
 
     def http_defaults(self):
         self.defaults()
-        self.port = "8672"
+        self.port = "9090"
         self.http = "yes"
         self.sslProfile = None
+        self.httpRootDir = "disabled"
+        self.healthz = "yes"
+        self.metrics = "yes"
+        self.websockets = "no"
 
+    def edge_defaults(self):
+        self.role = "edge"
+        self.host = "0.0.0.0"
+        self.port = "45671"
+        self.sslProfile = "skupper-internal"
+        self.saslMechanisms = "EXTERNAL"
+        self.authenticatePeer = "no"
+
+    def skupper_amqps_defaults(self):
+        self.host = "0.0.0.0"
+        self.sslProfile = "skupper-amqps"
+        self.port = "5671"
+        self.role = "normal"
+        self.saslMechanisms = "EXTERNAL"
+        self.authenticatePeer = "yes"
 
     def to_string(self):
         try:
-            return "\n    listener {\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n       http: %s\n    }" % (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer, self.http)
+            return ("\n" + ENTITY_INDENT + "listener {\n" + ATTRIBUTE_INDENT + "role: %s\n" + ATTRIBUTE_INDENT + "host: %s\n" + ATTRIBUTE_INDENT + "port: %s\n" + ATTRIBUTE_INDENT + "saslMechanisms: %s\n" + ATTRIBUTE_INDENT + "authenticatePeer:%s\n" + ATTRIBUTE_INDENT + "http: %s\n" + ATTRIBUTE_INDENT + "healthz: %s\n" + ATTRIBUTE_INDENT + "metrics: %s\n" + ATTRIBUTE_INDENT + "httpRootDir: %s\n" + ATTRIBUTE_INDENT + "websockets: %s\n" + ENTITY_INDENT + "}") % \
+                   (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer, self.http, self.healthz, self.metrics, self.httpRootDir, self.websockets)
         except:
             if self.sslProfile:
-                return "\n    listener {\n       sslProfile: %s\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n    }" % \
+                return ("\n" + ENTITY_INDENT + "listener {\n" + ATTRIBUTE_INDENT + "sslProfile: %s\n" + ATTRIBUTE_INDENT + "role: %s\n" + ATTRIBUTE_INDENT + "host: %s\n" + ATTRIBUTE_INDENT + "port: %s\n" + ATTRIBUTE_INDENT + "saslMechanisms: %s\n" + ATTRIBUTE_INDENT + "authenticatePeer:%s\n" + ENTITY_INDENT + "}") % \
                        (self.sslProfile, self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
             else:
-                return "\n    listener {\n       role: %s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       authenticatePeer:%s\n    }" % \
+                return ("\n" + ENTITY_INDENT + "listener {\n" + ATTRIBUTE_INDENT + "role: %s\n" + ATTRIBUTE_INDENT + "host: %s\n" + ATTRIBUTE_INDENT + "port: %s\n" + ATTRIBUTE_INDENT + "saslMechanisms: %s\n" + ATTRIBUTE_INDENT + "authenticatePeer:%s\n" + ENTITY_INDENT + "}") % \
                        (self.role, self.host, self.port, self.saslMechanisms, self.authenticatePeer)
 
 
@@ -114,14 +136,14 @@ class ConnectorEntity(BaseEntity):
         self.to_router = to_router
 
     def to_string(self):
-        ret_val = "\n    connector {\n       name: to_%s\n       host: %s\n       port: %s\n       saslMechanisms: %s\n       sslProfile: %s\n       verifyHostname: %s\n       role: %s\n    " % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
+        ret_val = ("\n" + ENTITY_INDENT + "connector {\n" + ATTRIBUTE_INDENT + "name: to_%s\n" + ATTRIBUTE_INDENT + "host: %s\n" + ATTRIBUTE_INDENT + "port: %s\n" + ATTRIBUTE_INDENT + "saslMechanisms: %s\n" + ATTRIBUTE_INDENT + "sslProfile: %s\n" + ATTRIBUTE_INDENT + "verifyHostname: %s\n" + ATTRIBUTE_INDENT + "role: %s\n"  ) % (self.to_router, self.host, self.port, self.saslMechanisms, self.sslProfile, self.verifyHostname, self.role)
         try:
             if self.cost:
-                ret_val = ret_val + '   cost: ' + self.cost + "\n    "
+                ret_val = ret_val  + ATTRIBUTE_INDENT +  'cost: ' + self.cost + "\n"
         except:
             pass
 
-        ret_val = ret_val + '}'
+        ret_val = ret_val  + ENTITY_INDENT +  '}'
         return ret_val
 
 
@@ -130,23 +152,24 @@ class RouterEntity(BaseEntity):
         super(RouterEntity, self).__init__(attributes, **kwattrs)
         self.has_route = False
 
+    def find_ssl_profile_by_name(self, name):
+        for ssl_profile in self.sslProfiles:
+            if ssl_profile.name == name:
+                return ssl_profile
+
     def to_string(self):
-        return "    router {\n       id:%s\n       mode: %s\n    }" % (self.id, self.mode)
+        return (ENTITY_INDENT + "router {\n" + ATTRIBUTE_INDENT + "id:%s\n" + ATTRIBUTE_INDENT + "mode: %s\n" + ENTITY_INDENT + "}") % (self.id, self.mode)
 
 class SslProfileEntity(BaseEntity):
-    def __init__(self, attributes=None, **kwattrs):
+    def __init__(self, attributes=None, tls_cert_dir=GENERATED_INTERNAL_TLS_CERTS_DIR, mounted_cert_dir=MOUNTED_INTERNAL_TLS_CERTS_DIR, **kwattrs):
         super(SslProfileEntity, self).__init__(attributes, **kwattrs)
-        self.cert_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".crt"
-        self.key_File = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".key"
-        self.password_file = GENERATED_TLS_CERTS_DIR + "tls." + self.router_id + ".pw"
-        self.ca_certFile = GENERATED_TLS_CERTS_DIR + "ca.crt"
+        self.cert_file = tls_cert_dir + "tls." + self.router_id + ".crt"
+        self.key_File = tls_cert_dir + "tls." + self.router_id + ".key"
+        self.ca_certFile = tls_cert_dir + "ca.crt"
 
-        self.mounted_cert_file = MOUNTED_TLS_CERTS_DIR + "tls.crt"
-        self.mounted_key_File = MOUNTED_TLS_CERTS_DIR + "tls.key"
-        self.mounted_password_file = MOUNTED_TLS_CERTS_DIR + "tls.pw"
-        self.mounted_ca_certFile = MOUNTED_TLS_CERTS_DIR + "ca.crt"
-
-
+        self.mounted_cert_file = mounted_cert_dir + "tls.crt"
+        self.mounted_key_File = mounted_cert_dir + "tls.key"
+        self.mounted_ca_certFile = mounted_cert_dir + "ca.crt"
 
     def gen_base64_content(self):
         with open(self.cert_file, "r") as certfile:
@@ -157,16 +180,12 @@ class SslProfileEntity(BaseEntity):
             content = keyfile.read()
             self.base64_key =  base64.b64encode(content.encode()).decode('utf-8')
 
-        with open(self.password_file, "r") as passfile:
-            content = passfile.read()
-            self.base64_password =  base64.b64encode(content.encode()).decode('utf-8')
-
         with open(self.ca_certFile, "r") as cacertfile:
             content = cacertfile.read()
             self.base64_ca_cert =  base64.b64encode(content.encode()).decode('utf-8')
 
     def to_string(self):
-        return "\n    sslProfile {\n       name:%s\n       certFile: %s\n       keyFile:%s\n       passwordFile: %s\n       caCertFile: %s\n    }" % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_password_file, self.mounted_ca_certFile)
+        return ("\n" + ENTITY_INDENT + "sslProfile {\n" + ATTRIBUTE_INDENT + "name:%s\n" + ATTRIBUTE_INDENT + "certFile: %s\n" + ATTRIBUTE_INDENT + "keyFile:%s\n" + ATTRIBUTE_INDENT +   "caCertFile: %s\n" +  ENTITY_INDENT +  "}") % (self.name, self.mounted_cert_file, self.mounted_key_File, self.mounted_ca_certFile)
 
 
 class ConsoleRouteEntity(BaseEntity):

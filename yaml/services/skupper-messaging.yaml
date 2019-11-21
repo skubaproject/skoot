@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skupper-messaging
+spec:
+  ports:
+  - name: amqps
+    port: 5671
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: 5671
+  - name: console
+    port: 8672
+    protocol: TCP
+    targetPort: 8672
+  selector:
+    application: skupper-router
+    skupper.io/component: router
+  type: ClusterIP
+---

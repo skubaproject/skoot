@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skupper-internal
+spec:
+  ports:
+  - name: inter-router
+    port: 55671
+    protocol: TCP
+    targetPort: 55671
+  - name: edge
+    port: 45671
+    protocol: TCP
+    targetPort: 45671
+  selector:
+    application: skupper-router
+    skupper.io/component: router
+  type: ClusterIP
+---

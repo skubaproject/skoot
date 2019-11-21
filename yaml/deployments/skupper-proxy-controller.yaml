@@ -1,0 +1,45 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: skupper-proxy-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: skupper
+      skupper.io/component: proxy-controller
+  template:
+    metadata:
+      labels:
+        application: skupper
+        skupper.io/component: proxy-controller
+    spec:
+      containers:
+      - env:
+        - name: ICPROXY_SERVICE_ACCOUNT
+          value: skupper
+        - name: SKUPPER_SERVICE_SYNC_ORIGIN
+          value: %s
+        image: quay.io/skupper/proxy-controller
+        imagePullPolicy: Always
+        name: proxy-controller
+        resources: {}
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/messaging/
+          name: skupper
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: skupper-proxy-controller
+      serviceAccountName: skupper-proxy-controller
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: skupper
+        secret:
+          defaultMode: 420
+          secretName: skupper
+---
+

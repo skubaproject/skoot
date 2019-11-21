@@ -19,13 +19,23 @@
 import os
 import subprocess
 import shutil
+import json
+import base64
 from subprocess import call
 from subprocess import PIPE
+import random, string
 
 from .entities import ListenerEntity
-from . import GENERATED_TLS_CERTS_DIR
+from . import GENERATED_INTERNAL_TLS_CERTS_DIR
 from . import GENERATED_CONFIG_DIR
 from . import YAML_SEPARATOR
+from . import ATTRIBUTE_INDENT
+from . import ENTITY_INDENT
+from . import GENERATED_EXTERNAL_TLS_CERTS_DIR
+from . import MOUNTED_EXTERNAL_TLS_CERTS_DIR
+
+
+ROUTER_iMAGE = "quay.io/interconnectedcloud/qdrouterd"
 
 class Network(object):
     def __init__(self, routers=None, connectors=None, console_routes=None, yaml_output_dir=None):
@@ -76,7 +86,7 @@ class Network(object):
                 break
         return maching_router
 
-    def write_default_listeners(self, out):
+    def write_listeners(self, out):
         """
         Writes out listerns on ports amqp and 8672 (http)
         :param out:
@@ -84,19 +94,38 @@ class Network(object):
         """
         out.write("\n")
         # A default listener on port amqp for every router
+
+        listeners = []
+
         listener = ListenerEntity()
         listener.defaults()
-        out.write(listener.to_string())
-        out.write("\n")
+        listeners.append(listener)
 
         # A HTTP listener for all routers
         listener = ListenerEntity()
         listener.http_defaults()
-        out.write(listener.to_string())
+        listeners.append(listener)
+
+        # An edge listener for all routers
+        listener = ListenerEntity()
+        listener.edge_defaults()
+        listeners.append(listener)
+
+        # Skupper amqps listener
+        listener = ListenerEntity()
+        listener.skupper_amqps_defaults()
+        listeners.append(listener)
+
+        for listener in listeners:
+            out.write(listener.to_string())
+            out.write("\n")
 
     def generate_router_configs(self):
         # Kick off the script that creates the certificate authority
-        p = subprocess.Popen(["../../certs/gen-ca-cert.sh", GENERATED_TLS_CERTS_DIR], stdout=PIPE, universal_newlines=True)
+        p = subprocess.Popen(["../../certs/gen-ca-cert.sh", GENERATED_INTERNAL_TLS_CERTS_DIR], stdout=PIPE, universal_newlines=True)
+        out = p.communicate()[0]
+
+        p = subprocess.Popen(["../../certs/gen-ca-cert.sh", GENERATED_EXTERNAL_TLS_CERTS_DIR], stdout=PIPE, universal_newlines=True)
         out = p.communicate()[0]
 
         # contents of the file will be erased.
@@ -117,9 +146,21 @@ class Network(object):
         for router in self.routers:
             file_name = self.router_file_name(router.id)
 
-            p = subprocess.Popen(["../../certs/gen-certs.sh", GENERATED_TLS_CERTS_DIR, router.id.lower()], stdout=PIPE,
+            p = subprocess.Popen(["../../certs/gen-certs.sh",
+                                  GENERATED_INTERNAL_TLS_CERTS_DIR,
+                                  router.id.lower()],
+                                 stdout=PIPE,
                                  universal_newlines=True)
             out = p.communicate()[0]
+
+            p1 = subprocess.Popen(["../../certs/gen-certs.sh",
+                                  GENERATED_EXTERNAL_TLS_CERTS_DIR,
+                                  router.id.lower()],
+                                 stdout=PIPE,
+                                 universal_newlines=True)
+
+            out = p1.communicate()[0]
+
             router_config_file = GENERATED_CONFIG_DIR + file_name
             with open(router_config_file, "w") as out:
                 out.write(router.to_string())
@@ -130,7 +171,7 @@ class Network(object):
                     ssl_profile.gen_base64_content()
 
                 # Write default
-                self.write_default_listeners(out)
+                self.write_listeners(out)
 
                 #Connectors
                 connectors = self.find_from_connectors(router.id)
@@ -151,7 +192,7 @@ class Network(object):
                 if connector:
                     if connector.to_router == router.id:
                         router.has_route = True
-                        listener_attrs = {'host': '0.0.0.0', "port": "55672", "role": "inter-router", "saslMechanisms": "EXTERNAL", "authenticatePeer": "yes", 'sslProfile': 'ssl-profile'}
+                        listener_attrs = {'host': '0.0.0.0', "port": "55671", "role": "inter-router", "saslMechanisms": "EXTERNAL", "authenticatePeer": "yes", 'sslProfile': 'skupper-internal'}
 
                         from_router = self.find_router_by_id(connector.from_router)
                         if from_router and from_router.mode == "edge":
@@ -163,7 +204,7 @@ class Network(object):
 
                 # Write out the boiler pl;plate addresses
                 out.write("\n")
-                out.write("\n    address {\n       prefix: closest\n       distribution: closest\n    } \n\n    address {\n       prefix: multicast\n       distribution: multicast\n    }\n")
+                out.write("\n" + ENTITY_INDENT +  "address {\n"  + ATTRIBUTE_INDENT + "prefix: closest\n" + ATTRIBUTE_INDENT + "distribution: closest\n" + ENTITY_INDENT +  "} \n\n" + ENTITY_INDENT + "address {\n" + ATTRIBUTE_INDENT + "prefix: multicast\n" + ATTRIBUTE_INDENT + "distribution: multicast\n" + ENTITY_INDENT + "}\n")
 
 
         if not os.path.exists(self.yaml_output_dir):
@@ -176,53 +217,128 @@ class Network(object):
                 os.makedirs(self.yaml_output_dir)
 
         for router in self.routers:
-            # Now all the router related certs and config files have been created. Create the YAML files.
+            # Now all the router related certs and config files have been created. Create the YAML file for each router
 
             yaml_file_name = self.yaml_output_dir + self.router_yaml_file_name(router.id)
 
             with open(yaml_file_name, "w") as yamlout:
-                with open("../../yaml/secrets.yaml", "r") as secretsyaml:
-                    content = secretsyaml.read()
-                    ssl_profile = router.sslProfiles[0]
-                    r_id = router.id.lower()
-                    content  = content % (ssl_profile.base64_cert, ssl_profile.base64_key, ssl_profile.base64_password, ssl_profile.base64_ca_cert)
-                    yamlout.write(content)
-                yamlout.write(YAML_SEPARATOR)
 
-                with open("../../yaml/configmap.yaml", "r") as configmapyaml:
-                    content = configmapyaml.read()
+                # 1. Create deployments. Start with the skupper-router deployment
+                with open("../../yaml/deployments/skupper-router.yaml", "r") as skupper_router_yaml:
+                    content = skupper_router_yaml.read()
+                    router_image = os.environ.get('QDROUTERD_IMAGE')
+                    if not router_image:
+                        router_image = ROUTER_iMAGE
                     file_name = self.router_file_name(router.id)
-                    with open(GENERATED_CONFIG_DIR + file_name, "r") as router_config:
-                        router_content  = router_config.read()
-                        content = content %  router_content
+                    with open(GENERATED_CONFIG_DIR + file_name, "r") as router_config_file:
+                        router_config  = router_config_file.read()
+                        content = content %  (router_config, router_image)
                         yamlout.write(content)
 
-                yamlout.write(YAML_SEPARATOR)
+                # Next deployment is skupper-proxy-contoller
+                with open("../../yaml/deployments/skupper-proxy-controller.yaml", "r") as skupper_pc_yaml:
+                    content = skupper_pc_yaml.read()
+                    random_string = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(15)])
+                    content = content % (random_string)
+                    yamlout.write(content)
 
-                with open("../../yaml/service.yaml", "r") as serviceyaml:
-                    for line in serviceyaml:
-                        yamlout.write(line)
-                yamlout.write(YAML_SEPARATOR)
+                # skupper-internal secret
+                with open("../../yaml/secrets/skupper-internal.yaml", "r") as secretsyaml:
+                    content = secretsyaml.read()
+                    ssl_profile = router.find_ssl_profile_by_name("skupper-internal")
+                    content  = content % (ssl_profile.base64_cert, ssl_profile.base64_key, ssl_profile.base64_ca_cert)
+                    yamlout.write(content)
 
-                with open("../../yaml/deployment.yaml", "r") as deploymentyaml:
-                    for line in deploymentyaml:
-                        yamlout.write(line)
-                yamlout.write(YAML_SEPARATOR)
+                with open("../../yaml/secrets/skupper-amqps.yaml", "r") as secretsyaml:
+                    content = secretsyaml.read()
+                    ssl_profile = router.find_ssl_profile_by_name("skupper-amqps")
+                    content  = content % (ssl_profile.base64_cert, ssl_profile.base64_key, ssl_profile.base64_ca_cert)
+                    yamlout.write(content)
 
-                with open("../../yaml/route.yaml", "r") as routeyaml:
-                    if router.has_route:
-                        content = routeyaml.read()
-                        content = content % router.host
-                        yamlout.write(content)
-                        yamlout.write(YAML_SEPARATOR)
+                with open("../../yaml/secrets/skupper.yaml", "r") as secretsyaml:
+                    content = secretsyaml.read()
+                    connect_string = {
+                                       "scheme": "amqps",
+                                        "verify": "false",
+                                       "host": "skupper-messaging",
+                                       "port": "5671",
+                                        "tls": {
+                                            "ca": "/etc/messaging/ca.crt",
+                                            "cert": "/etc/messaging/tls.crt",
+                                            "key": "/etc/messaging/tls.key",
+                                            "verify": "false"
+                                        }
+                                  }
+                    connect_json = json.dumps(connect_string)
+                    connect_json_base64 = base64.b64encode(connect_json.encode()).decode('utf-8')
+                    ssl_profile = router.find_ssl_profile_by_name("skupper-amqps")
+                    content  = content % (ssl_profile.base64_ca_cert, ssl_profile.base64_cert, ssl_profile.base64_key, connect_json_base64)
+                    yamlout.write(content)
 
-                with open("../../yaml/consoleroute.yaml", "r") as consolerouteyaml:
-                    console_route = self.find_from_console_routes(router.id)
-                    if console_route:
-                        content = consolerouteyaml.read()
-                        content = content % console_route.host
-                        yamlout.write(content)
-                        yamlout.write(YAML_SEPARATOR)
+                with open("../../yaml/secrets/skupper-ca.yaml", "r") as secretsyaml:
+                    content = secretsyaml.read()
+                    ssl_profile = router.find_ssl_profile_by_name("skupper-internal")
+                    content  = content % (ssl_profile.base64_ca_cert, ssl_profile.base64_key)
+                    yamlout.write(content)
+
+                # roles
+                with open("../../yaml/roles/skupper-edit.yaml", "r") as skupper_edit_yaml:
+                    content = skupper_edit_yaml.read()
+                    yamlout.write(content)
+
+                with open("../../yaml/roles/skupper-view.yaml", "r") as skupper_view_yaml:
+                    content = skupper_view_yaml.read()
+                    yamlout.write(content)
+
+                # role bindings
+                with open("../../yaml/rolebindings/skupper-edit.yaml", "r") as skupper_edit_yaml:
+                    content = skupper_edit_yaml.read()
+                    yamlout.write(content)
+
+                with open("../../yaml/rolebindings/skupper-view.yaml", "r") as skupper_view_yaml:
+                    content = skupper_view_yaml.read()
+                    yamlout.write(content)
+
+                # Services
+                with open("../../yaml/services/skupper-messaging.yaml", "r") as skupper_messaging_yaml:
+                    content = skupper_messaging_yaml.read()
+                    yamlout.write(content)
+
+                with open("../../yaml/services/skupper-internal.yaml", "r") as skupper_internal_yaml:
+                    content = skupper_internal_yaml.read()
+                    yamlout.write(content)
+
+                # ServiceAccounts
+                with open("../../yaml/serviceaccounts/skupper-router.yaml", "r") as skupper_router_yaml:
+                    content = skupper_router_yaml.read()
+                    yamlout.write(content)
+
+                with open("../../yaml/serviceaccounts/skupper-proxy-controller.yaml", "r") as skupper_proxy_yaml:
+                    content = skupper_proxy_yaml.read()
+                    yamlout.write(content)
+
+
+                # Routes
+                with open("../../yaml/routes/skupper-edge.yaml", "r") as skupper_edge_yaml:
+                    content = skupper_edge_yaml.read()
+                    try:
+                        host = router.host
+                        if host.find("inter-router") != -1:
+                            host = host.replace("inter-router", "edge")
+                            content  = content % host
+                            yamlout.write(content)
+                    except:
+
+                        pass
+
+                with open("../../yaml/routes/skupper-inter-router.yaml", "r") as skupper_ir_yaml:
+                    content = skupper_ir_yaml.read()
+                    content  = content % (router.host)
+                    yamlout.write(content)
+
+
+
+
 
 
 

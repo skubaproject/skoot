@@ -20,6 +20,13 @@
 
 ##### Create root CA #####
 
+if [  $# -le 1 ]
+then
+   echo "Usage: ./gen-ca-cert.sh <absolute-path> - <absolute-path> is the path where the ca certs need to be generated. Example - ./gen-ca-cert.sh /tmp/certs"
+   exit 1
+fi
+
+
 D=$1
 
 if [ -d "$D" ]; then
@@ -32,9 +39,6 @@ else
    echo Created direcotry - $D
 fi
 
-
-
-
 ##### Create root CA #####
-openssl genrsa -aes256 -passout pass:ca-password -out $D/ca.key 4096
-openssl req -key $D/ca.key -new -x509 -days 99999 -sha256 -out $D/ca.crt -passin pass:ca-password -subj "/C=US/ST=New York/L=Brooklyn/O=Trust Me Inc./CN=Trusted.CA.com"
+openssl genrsa -out $D/ca.key 4096
+openssl req -key $D/ca.key -new -x509 -days 99999 -sha256 -out $D/ca.crt  -subj "/C=US/ST=New York/L=Brooklyn/O=Trust Me Inc./CN=skupper-messaging"

@@ -26,6 +26,8 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from entities.nets import Network
 from entities.entities import RouterEntity, ConnectorEntity, SslProfileEntity, ConsoleRouteEntity, ListenerEntity
+from entities import GENERATED_EXTERNAL_TLS_CERTS_DIR
+from entities import MOUNTED_EXTERNAL_TLS_CERTS_DIR
 
 VERSION = "1.0.0"
 ROUTER = "Router"
@@ -83,14 +85,20 @@ def run(argv):
                     if components[0] == ROUTER or components[0] == EDGE_ROUTER:
                         router_id = components[1]
 
+                        ssl_profiles = list()
+
                         router_attributes = dict()
-                        ssl_profile = SslProfileEntity({'name': 'ssl-profile',
+                        ssl_profile = SslProfileEntity({'name': 'skupper-internal',
                                                         'router_id': router_id.lower()})
-                        ssl_prfiles = list()
-                        ssl_prfiles.append(ssl_profile)
+                        ssl_profiles.append(ssl_profile)
+
+                        ssl_profile = SslProfileEntity(attributes={'name': 'skupper-amqps', 'router_id': router_id.lower()},
+                                                       tls_cert_dir=GENERATED_EXTERNAL_TLS_CERTS_DIR,
+                                                       mounted_cert_dir=MOUNTED_EXTERNAL_TLS_CERTS_DIR)
+                        ssl_profiles.append(ssl_profile)
 
                         router_attributes['id'] = router_id
-                        router_attributes['sslProfiles'] = ssl_prfiles
+                        router_attributes['sslProfiles'] = ssl_profiles
                         if components[0] == ROUTER:
                             router_attributes['mode'] = "interior"
                         elif components[0] == EDGE_ROUTER:
@@ -104,7 +112,7 @@ def run(argv):
                         router_entity = RouterEntity(router_attributes)
                         routers.append(router_entity)
                     elif data.startswith(CONNECTOR):
-                        conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'ssl-profile',  'verifyHostname': 'no', 'role': 'inter-router'}
+                        conn_attrs = {"port": "443", 'saslMechanisms': 'EXTERNAL', 'sslProfile': 'skupper-internal',  'verifyHostname': 'no', 'role': 'inter-router'}
                         if len(components) > 3:
                             conn_attrs['cost'] = components[3]
 

@@ -1,0 +1,19 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: skupper-edge
+spec:
+  host: %s
+  port:
+    targetPort: edge
+  subdomain: ""
+  tls:
+    insecureEdgeTerminationPolicy: None
+    termination: passthrough
+  to:
+    kind: Service
+    name: skupper-internal
+    weight: 100
+  wildcardPolicy: None
+---
