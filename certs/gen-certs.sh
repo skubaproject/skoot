@@ -18,8 +18,7 @@
 # under the License
 #
 
-if [  $# -le 1 ]
-then
+if [  $# -ne 2 ]; then
    echo "Usage: ./gen-certs.sh <absolute-path> namespace - Example: ./gen-ca-cert.sh /tmp/certs pvt"
    exit 1
 fi

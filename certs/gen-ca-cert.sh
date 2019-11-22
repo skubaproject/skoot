@@ -20,12 +20,10 @@
 
 ##### Create root CA #####
 
-if [  $# -le 1 ]
-then
+if [  $# -ne 1 ]; then
    echo "Usage: ./gen-ca-cert.sh <absolute-path> - <absolute-path> is the path where the ca certs need to be generated. Example - ./gen-ca-cert.sh /tmp/certs"
    exit 1
 fi
-
 
 D=$1
 
