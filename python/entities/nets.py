@@ -241,7 +241,7 @@ class Network(object):
                 # Next deployment is skupper-proxy-contoller
                 with open("../../yaml/deployments/skupper-proxy-controller.yaml", "r") as skupper_pc_yaml:
                     content = skupper_pc_yaml.read()
-                    random_string = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(15)])
+                    random_string = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(15)])
                     content = content % (random_string)
                     yamlout.write(content)
 
