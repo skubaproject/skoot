@@ -126,7 +126,7 @@ def run(argv):
                         console_routes.append(console_route)
 
 
-
+    print ("opts.output ", opts.output)
     network = Network(routers=routers, connectors=connectors, console_routes=console_routes, yaml_output_dir=opts.output)
     network.generate_router_configs()
 

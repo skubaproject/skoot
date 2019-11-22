@@ -43,8 +43,9 @@ class Network(object):
         self.connectors = connectors
         self.listener = None
         self.console_routes = console_routes
-        if not yaml_output_dir.endswith("/"):
-            self.yaml_output_dir = yaml_output_dir + "/"
+        self.yaml_output_dir = yaml_output_dir
+        if not self.yaml_output_dir.endswith("/"):
+            self.yaml_output_dir = self.yaml_output_dir + "/"
 
     def router_file_name(self, router_id):
         return router_id + ".conf"
@@ -220,6 +221,8 @@ class Network(object):
             # Now all the router related certs and config files have been created. Create the YAML file for each router
 
             yaml_file_name = self.yaml_output_dir + self.router_yaml_file_name(router.id)
+
+            print ("yaml_file_name", yaml_file_name)
 
             with open(yaml_file_name, "w") as yamlout:
 
